@@ -28,6 +28,9 @@ export default {
             token: Cookie.get("token"),
             removeDate: Cookie.get("removeDate")
         }
+    },
+    mounted() {
+        console.log(process.env.API_BASE_URL)
     }
 }
 </script>>

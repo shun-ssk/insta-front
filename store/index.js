@@ -3,6 +3,8 @@ import axios from "axios";
 import Cookie from "js-cookie";
 import firebase from "~/plugins/firebase";
 
+const baseURL = process.env.API_BASE_URL;
+
 const newStore = () => {
     return new Vuex.Store({
         state: {
@@ -108,7 +110,7 @@ const newStore = () => {
                 commit("setLoginUser", payload)
             },
             setUsers(vc) {
-                return axios.get("http://localhost:8080/api/user")
+                return axios.get( baseURL + "/api/user")
                 .then(res => {
                     const userArray = [];
                     for (const key in res.data) {
@@ -118,7 +120,7 @@ const newStore = () => {
                 })
             },
             setPosts(vc){
-                return axios.get("http://localhost:8080/api/post")
+                return axios.get( baseURL + "/api/post")
                 .then(res => {
                     const postArray = [];
                     for (const key in res.data) {
@@ -129,7 +131,7 @@ const newStore = () => {
                 .catch(err => console.log(err))
             },
             setLike(vc) {
-                return axios.get("http://localhost:8080/api/like", {
+                return axios.get( baseURL + "/api/like", {
                     headers: { "Authorizations" : Cookie.get("token") }
                 })
                 .then(res => {
@@ -141,7 +143,7 @@ const newStore = () => {
                 })
             },
             setComment(vc) {
-                return axios.get("http://localhost:8080/api/comment", {
+                return axios.get( baseURL + "/api/comment", {
                     headers: { "Authorizations" : Cookie.get("token") }
                 })
                 .then(res => {
@@ -153,7 +155,7 @@ const newStore = () => {
                 })
             },
             setFollow(vc) {
-                return axios.get("http://localhost:8080/api/follow", {
+                return axios.get( baseURL + "/api/follow", {
                     headers: { "Authorizations" : Cookie.get("token") }
                 })
                 .then(res => {
@@ -165,7 +167,7 @@ const newStore = () => {
                 })
             },
             addPost(vc, params) {
-                return axios.post("http://localhost:8080/api/post",params,
+                return axios.post( baseURL + "/api/post",params,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
                     headers: { "Authorizations" : Cookie.get("token") }
@@ -176,7 +178,7 @@ const newStore = () => {
                 .catch(err => console.log(err))
             },
             addComment(vc, params) {
-                return axios.post("http://localhost:8080/api/comment", params,
+                return axios.post( baseURL + "/api/comment", params,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
                     headers: { "Authorizations" : Cookie.get("token") }   
@@ -187,35 +189,35 @@ const newStore = () => {
                 .catch(err => console.log(err))
             },
             updatePost(vc, params) {
-                return axios.post("http://localhost:8080/api/post/edit/" + params[0], params[1])
+                return axios.post( baseURL + "/api/post/edit/" + params[0], params[1])
                 .then(res => {
                     vc.commit('updatePost', res.data)
                 })
                 .catch(err => console.log(err))
             },
             updateComment(vc, params) {
-                return axios.post("http://localhost:8080/api/comment/edit/" + params[0], params[1])
+                return axios.post( baseURL + "/api/comment/edit/" + params[0], params[1])
                 .then(res => {
                     vc.commit('updateComment', res.data)
                 })
                 .catch(err => console.log(err))
             },
             deletePost(vc, postId) {
-                return axios.get("http://localhost:8080/api/post/edit/" + postId)
+                return axios.get( baseURL + "/api/post/edit/" + postId)
                 .then(res => {
                     vc.commit('deletePost', res.data)
                 })
                 .catch(err => console.log(err))
             },
             deleteComment(vc, commentID) {
-                return axios.get("http://localhost:8080/api/comment/edit/" + commentID)
+                return axios.get( baseURL + "/api/comment/edit/" + commentID)
                 .then(res => {
                     vc.commit('deleteComment', res.data)
                 })
                 .catch(err => console.log(err))
             },
             follow(vc, params) {
-                return axios.post("http://localhost:8080/api/follow", params,
+                return axios.post( baseURL + "/api/follow", params,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
                     headers: { "Authorizations" : Cookie.get("token") }
@@ -225,7 +227,7 @@ const newStore = () => {
                 })
             },
             like(vc, params) {
-                return axios.post("http://localhost:8080/api/like", params,
+                return axios.post( baseURL + "/api/like", params,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
                     headers: { "Authorizations" : Cookie.get("token") }
@@ -235,7 +237,7 @@ const newStore = () => {
                 })
             },
             login(vc, params) {
-                return axios.post("http://localhost:8080/auth",params,
+                return axios.post( baseURL + "/auth", params,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
                     headers: { "Authorizations" : `Bearer ${Cookie.get("jwt")}` }
