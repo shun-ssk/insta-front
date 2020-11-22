@@ -24,5 +24,5 @@ docker-compose up -d
  
 # Author
  
-* 東北大学3年 佐々木 駿
-* 連絡先 ssk.shun@dc.tohoku.ac.jp
+* Author: SHUN SASAKI
+* Email: ssk.shun@dc.tohoku.ac.jp
