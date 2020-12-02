@@ -1,10 +1,12 @@
 require('dotenv').config();
 const { API_BASE_URL } = process.env;
+const { PROD_API_BASE_URL } = process.env;
+const { APP_ENV } = process.env;
 
 export default {
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head: {
-    title: 'sample-nuxt',
+    title: 'instagramもどき',
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -43,6 +45,8 @@ export default {
 
   // Environment variable
   env: {
-    API_BASE_URL
+    API_BASE_URL,
+    PROD_API_BASE_URL,
+    APP_ENV
   }
 }

@@ -9,7 +9,8 @@
       </span>
       <div class="spacer"></div>
         <div class="image">
-            <img class="image" :src="'http://localhost:9001/posts/' + post_image_url" >
+         <!-- <img class="image" :src="'http://localhost:9001/posts/' + post_image_url" > -->
+         <img class="image" :src="'https://insta-practice-static2.s3.amazonaws.com/' + post_image_url" >
         </div>
         <div class="post-content">
           <ul class="nav">
@@ -22,17 +23,48 @@
             <h3 class="text">{{ text }}</h3>
         </div>
         <div class="comment">
-          <p v-if="isComment(post_id)" class="comment-title">コメント一覧</p>
-          <div v-for="comment in getComment(post_id)" :key="comment.ID" >
-          <ul class="nav-comment" v-if="!comment.is_deleted">
-            <li class="nav-item"><nuxt-link :to=" '/mypage/' + comment.user_id "><img class="comment-image-icon" :src="getUserImage(comment.user_id)"></nuxt-link></li>
-            <li class="nav-item"><nuxt-link :to=" '/mypage/' + comment.user_id " class="link-string"><p>{{ getUserName(comment.user_id) }}</p></nuxt-link></li>
-            <li v-if="isEditing != comment.ID" class="nav-item"><p>{{ comment.text }}</p></li>
-            <li v-if="isEditing == comment.ID"><input class="edit-input" v-model="editComment" placeholder="コメントを記入" ></li>
-            <li v-if="isEditing == comment.ID"><button class="edit-button" @click="UpdateComment(comment.ID)">編集</button></li>
-            <li v-if="comment.user_id == getUserIDWithEmail(loginUser.email)" class="nav-item"><a @click="toggle(comment.ID)"><img class="comment-icon" src="/editIcon.png"/></a></li>
-            <li v-if="comment.user_id == getUserIDWithEmail(loginUser.email)" class="nav-item"><a @click="DeleteComment(comment.ID)"><img class="comment-icon" src="/deleteIcon.png"/></a></li>
-          </ul>
+          <p v-if="isComment(post_id)" class="comment-title">コメント{{ getCommentNumber(post_id) }}件</p>
+          <p class="comment-toggle" v-if="getCommentNumber(post_id) > 3 && !showAllComment" @click="ToggleShowAllComment">全てのコメントを表示</p>
+          <p class="comment-toggle" v-if="getCommentNumber(post_id) > 3 && showAllComment" @click="ToggleShowAllComment">元に戻す</p>
+          <!-- コメント3件以下 -->
+          <div v-if="getComment(post_id).length < 4 || showAllComment == false">
+            <div v-for="comment in getComment(post_id).slice(0,3)" :key="comment.ID" class="each-comment">
+              <ul class="nav-comment" v-if="!comment.is_deleted">
+                <li class="nav-item comment-image"><nuxt-link :to=" '/mypage/' + comment.user_id "><img class="comment-image-icon" :src="getUserImage(comment.user_id)"></nuxt-link></li>
+                <li class="nav-item comment-user-name"><nuxt-link :to=" '/mypage/' + comment.user_id " class="link-string"><p class="comment-user-name">{{ getUserName(comment.user_id) }}</p></nuxt-link></li>
+                <li v-if="isEditing != comment.ID && comment.text.length < 12" class="nav-item comment-text shorttext"><p>{{ comment.text }}</p></li>
+                <li v-if="isEditing != comment.ID && comment.text.length >= 12" class="nav-item comment-text longtext">
+                  <p class="comment-longtext" v-if="detailComments.indexOf(comment.ID) == -1">{{ comment.text.slice(0, 12) + "..." }}</p>
+                  <p class="read-more" v-if="detailComments.indexOf(comment.ID) == -1" @click="ToggleShowAllText(comment.ID)">続きを読む</p>
+                  <p class="comment-longtext" v-if="detailComments.indexOf(comment.ID) != -1">{{ comment.text }}</p>
+                  <p class="read-more" v-if="detailComments.indexOf(comment.ID) != -1" @click="ToggleShowAllText(comment.ID)">元に戻す</p>
+                </li>
+                <li class="comment-input" v-if="isEditing == comment.ID"><input class="edit-input" v-model="editComment" placeholder="コメントを記入" ></li>
+                <li class="comment-button" v-if="isEditing == comment.ID"><button class="edit-button" @click="UpdateComment(comment.ID)">編集</button></li>
+                <li class="comment-edit nav-item" v-if="comment.user_id == getUserIDWithEmail(loginUser.email)"><a @click="toggle(comment.ID)"><img class="comment-icon" src="/editIcon.png"/></a></li>
+                <li class="comment-edit nav-item" v-if="comment.user_id == getUserIDWithEmail(loginUser.email)"><a @click="DeleteComment(comment.ID)"><img class="comment-icon" src="/deleteIcon.png"/></a></li>
+              </ul>
+            </div>
+          </div>
+          <!-- コメント４件以上 -->
+          <div v-if="getComment(post_id).length >= 4 && showAllComment == true">
+            <div v-for="comment in getComment(post_id)" :key="comment.ID" class="each-comment">
+              <ul class="nav-comment" v-if="!comment.is_deleted">
+                <li class="nav-item comment-image"><nuxt-link :to=" '/mypage/' + comment.user_id "><img class="comment-image-icon" :src="getUserImage(comment.user_id)"></nuxt-link></li>
+                <li class="nav-item comment-user-name"><nuxt-link :to=" '/mypage/' + comment.user_id " class="link-string"><p class="comment-user-name">{{ getUserName(comment.user_id) }}</p></nuxt-link></li>
+                <li v-if="isEditing != comment.ID && comment.text.length < 12" class="nav-item comment-text shorttext"><p>{{ comment.text }}</p></li>
+                <li v-if="isEditing != comment.ID && comment.text.length >= 12" class="nav-item comment-text longtext">
+                  <p class="comment-longtext" v-if="detailComments.indexOf(comment.ID) == -1">{{ comment.text.slice(0, 12) + "..." }}</p>
+                  <p class="read-more" v-if="detailComments.indexOf(comment.ID) == -1" @click="ToggleShowAllText(comment.ID)">続きを読む</p>
+                  <p class="comment-longtext" v-if="detailComments.indexOf(comment.ID) != -1">{{ comment.text }}</p>
+                  <p class="read-more" v-if="detailComments.indexOf(comment.ID) != -1" @click="ToggleShowAllText(comment.ID)">元に戻す</p>
+                </li>
+                <li class="comment-input" v-if="isEditing == comment.ID"><input class="edit-input" v-model="editComment" placeholder="コメントを記入" ></li>
+                <li class="comment-button" v-if="isEditing == comment.ID"><button class="edit-button" @click="UpdateComment(comment.ID)">編集</button></li>
+                <li class="comment-edit nav-item" v-if="comment.user_id == getUserIDWithEmail(loginUser.email)"><a @click="toggle(comment.ID)"><img class="comment-icon" src="/editIcon.png"/></a></li>
+                <li class="comment-edit nav-item" v-if="comment.user_id == getUserIDWithEmail(loginUser.email)"><a @click="DeleteComment(comment.ID)"><img class="comment-icon" src="/deleteIcon.png"/></a></li>
+              </ul>
+            </div>
           </div>
           <ul class="nav-input">
           <li><input class="input" v-model="newComment" placeholder="コメントを記入" ></li>
@@ -52,7 +84,9 @@ export default {
       return {
         newComment: "",
         editComment: "",
-        isEditing: 0
+        isEditing: 0,
+        showAllComment: false,
+        detailComments: []
       }
     },
     props: {
@@ -124,10 +158,20 @@ export default {
         }else{
           this.isEditing = 0
         }
+      },
+      ToggleShowAllText: function(id) {
+        if(this.detailComments.indexOf(id) == -1){
+          this.detailComments.push(id)
+        }else{
+          this.detailComments.splice(this.detailComments.indexOf(id), 1)
+        }
+      },
+      ToggleShowAllComment: function() {
+        this.showAllComment = !this.showAllComment
       }
     },
     computed: {
-      ...mapGetters(['getUserName', 'getUserImage', 'getUserIDWithEmail', 'isLike', 'likeNumber', "getComment", "isComment"]),
+      ...mapGetters(['getUserName', 'getUserImage', 'getUserIDWithEmail', 'isLike', 'likeNumber', "getComment", "isComment", "getCommentNumber"]),
       ...mapState(['loginUser'])
     }
 }
@@ -171,7 +215,7 @@ export default {
 .comment-icon {
   width: 25px;
   height: 25px;
-  padding: 15px;
+  margin-top: 15px;
 }
 
 .image-icon {
@@ -204,10 +248,49 @@ export default {
 
 .nav-comment {
   list-style: none;
+  height: auto;
   padding: 0;
   margin: 0;
   display: flex;
-  height: 30px;
+}
+
+.comment-image {
+  flex-basis: 5%;
+}
+
+.comment-user-name {
+  flex-basis: 20%;
+  font-size: 15px;
+}
+
+.comment-text {
+  flex-basis: 80%;
+}
+
+.comment-longtext {
+  width: 80%;
+}
+
+.comment-edit {
+  flex-basis: 5%;
+}
+
+.comment-input {
+  flex-basis: 70%;
+}
+
+.comment-button {
+  flex-basis: 10%;
+}
+
+.longtext p {
+  float: left;
+}
+
+.read-more {
+  font-size: 8px;
+  margin-top: 25px;
+  width: 20%;
 }
 
 .nav-input {
@@ -243,6 +326,11 @@ export default {
   margin-left: 20px
 }
 
+.comment-toggle {
+  font-size: 8px;
+  margin-left: 20px;
+}
+
 .input {
   margin-left: 20px;
 }
@@ -250,6 +338,7 @@ export default {
 .edit-input,
 .edit-button {
   margin: 15px;
+  width: 90%;
 }
 
 .like-number{

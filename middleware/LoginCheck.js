@@ -1,5 +1,7 @@
-export default function({ redirect, store }) {
-    if(!store.getters['isAuthenticated']){
-        redirect('/')
+import Cookie from 'js-cookie'
+
+export default function({ redirect }) {
+    if(!Cookie.get("token")){
+        return redirect("/")
     }
 }

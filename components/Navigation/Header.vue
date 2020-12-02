@@ -3,21 +3,6 @@
   <header class="the-header">
     <nuxt-link to="/" class="title" ><h2 class="title">Instagram</h2></nuxt-link>
     <div class="spacer"></div>
-    <div class="navigation-items">
-      <ul class="nav-list">
-        <li v-if="isAuthenticated" class="nav-item"><nuxt-link to="/post"><img class="menu-icon" src="/home.png" /></nuxt-link></li>
-        <li v-if="isAuthenticated" class="nav-item"><nuxt-link to="/search"><img class="menu-icon" src="/search.png" /></nuxt-link></li>
-        <li v-if="isAuthenticated" class="nav-item"><nuxt-link to="/post/create"><img class="menu-icon" src="/create.png" /></nuxt-link></li>
-        <li v-if="isAuthenticated" class="nav-item"><nuxt-link to="/post/create"><img class="menu-icon" src="/setting.png" /></nuxt-link></li>
-        <li v-if="isAuthenticated" class="nav-item">
-          <a @click="signOut"><img class="menu-icon" src="/logout.png" /></a>
-        </li>
-        <li v-else class="nav-item">
-          <a @click="signIn"><img class="menu-icon" src="/logout.png" /></a>
-        </li>
-      </ul>
-    </div>
-    <div class="spacer"></div>
     <div v-if="isAuthenticated" class="nav-item">
       <nuxt-link :to="'/mypage/' + getUserIDWithEmail(loginUser.email)">{{ loginUser.displayName }}</nuxt-link>
       <nuxt-link :to="'/mypage/' + getUserIDWithEmail(loginUser.email)"><img class="icon" :src=loginUser.photoURL></nuxt-link>
