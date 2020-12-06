@@ -136,18 +136,6 @@ const newStore = () => {
             }
         },
         actions: {
-            /*
-            nuxtServerInit(vc) {
-                return axios.get("http://localhost:8080/api/post").then(res => {
-                    const postArray = [];
-                    for (const key in res.data) {
-                        postArray.push({ ...res.data[key], id: key})
-                    }
-                    vc.commit("setPosts", postArray);
-                })
-                .catch(err => console.log(err))
-            },
-            */
             setUser({commit}, payload) {
                 commit("setLoginUser", payload)
             },
