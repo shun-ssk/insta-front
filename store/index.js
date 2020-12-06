@@ -136,18 +136,6 @@ const newStore = () => {
             }
         },
         actions: {
-            /*
-            nuxtServerInit(vc) {
-                return axios.get("http://localhost:8080/api/post").then(res => {
-                    const postArray = [];
-                    for (const key in res.data) {
-                        postArray.push({ ...res.data[key], id: key})
-                    }
-                    vc.commit("setPosts", postArray);
-                })
-                .catch(err => console.log(err))
-            },
-            */
             setUser({commit}, payload) {
                 commit("setLoginUser", payload)
             },
@@ -223,7 +211,9 @@ const newStore = () => {
                 })
             },
             pollingMessages(vc, params) {
-                console.log(params)
+              /*
+              params[ userID , lastMessageID ]
+              */
                 return axios.post( baseURL + "/api/message/polling/" + params[0], params[1], {
                     headers: { "Authorizations" : Cookie.get("token") }
                 })
