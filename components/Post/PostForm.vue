@@ -1,6 +1,7 @@
 <template>
 <div class="form">
-    <form @submit.prevent="Save">
+    <p class="err-text">{{ errText }}</p>
+    <form @submit.prevent="Validation">
         <input @change="changeFile" ref="rfafile" type="file">
         <Input control-type="textarea" v-model="text" name="text" placeholder="キャプション(最大255文字)"/>
         <section class="create">
@@ -20,7 +21,8 @@ export default {
     data() {
         return {
             text: "",
-            uploadfile: {}
+            uploadfile: {},
+            errText: ""
         }
     },
     methods: {
@@ -33,6 +35,24 @@ export default {
         changeFile(e) {
             const files = e.target.files || e.dataTransfer.files;
             this.uploadfile = files[0];
+            console.log(this.uploadfile)
+            console.log(this.uploadfile.type.split('/')[1])
+            console.log(this.uploadfile.size)
+        },
+        Validation() {
+            if(this.text.length >= 256 ) {
+                this.errText = "255文字までしかできません"
+                return
+            }
+            if(this.uploadfile.type.split('/')[1] != "png" && this.uploadfile.type.split('/')[1] != "jpeg"){
+                this.errText = "pngまたはjpeg形式を選択して下さい"
+                return
+            }
+            if(this.uploadfile.size > 10485760) {
+                this.errText = "画像のサイズが大きすぎます(10M以下)"
+                return
+            }
+            this.Save()
         }
     }
 }
@@ -48,6 +68,10 @@ export default {
 }
 
 .create{
+    text-align: center;
+}
+
+.err-text {
     text-align: center;
 }
 </style>

@@ -3,6 +3,8 @@ import axios from "axios";
 import Cookie from "js-cookie";
 import firebase from "~/plugins/firebase";
 
+const baseURL = process.env.PROD_API_BASE_URL;
+
 const newStore = () => {
     return new Vuex.Store({
         state: {
@@ -11,6 +13,8 @@ const newStore = () => {
             loadLikes: [],
             loadComment: [],
             loadFollow: [],
+            loadMessages: [],
+            TalkUsers: [],
             loginUser: null
         },
         mutations: {
@@ -26,8 +30,20 @@ const newStore = () => {
             setComment(state, payload){
                 state.loadComment = payload
             },
-            setFolloe(state, payload){
+            setFollow(state, payload){
                 state.loadFollow = payload
+            },
+            setMessages(state, payload){
+                state.loadMessages = payload
+            },
+            setTalkUsers(state, payload) {
+                for(const message of state.loadMessages) {
+                    if(message.to_user_id == payload) {
+                        if(state.TalkUsers.indexOf(message.from_user_id) == -1) {
+                            state.TalkUsers.push(message.from_user_id)
+                        }
+                    }
+                }
             },
             setLoginUser(state, payload) {
                 state.loginUser = payload
@@ -37,6 +53,17 @@ const newStore = () => {
             },
             addComment(state, payload) {
                 state.loadComment.push(payload)
+            },
+            addMessage(state, payload) {
+                state.loadMessages.push(payload)
+            },
+            pollingMessages(state, payload) {
+                state.loadMessages = state.loadMessages.concat(payload)
+            },
+            addTalkUser(state, payload) {
+                if(state.TalkUsers.indexOf(payload) == -1) {
+                    state.TalkUsers.push(payload)
+                }
             },
             updatePost(state, payload) {
                 for(const post of state.loadPosts) {
@@ -89,6 +116,23 @@ const newStore = () => {
                 if(push) {
                     state.loadLikes.push(payload)
                 }
+            },
+            lock(state, payload) {
+                for(const user of state.loadUsers) {
+                    if(payload.ID == user.ID){
+                        user.is_lock = payload.is_lock
+                    }
+                }
+            },
+            clearVuexStore(state) {
+                state.loadPosts = []
+                state.loadUsers = []
+                state.loadComment = []
+                state.loadLikes = []
+                state.loadMessages = []
+                state.loadFollow = []
+                state.TalkUsers = []
+                state.loginUser = null
             }
         },
         actions: {
@@ -108,7 +152,7 @@ const newStore = () => {
                 commit("setLoginUser", payload)
             },
             setUsers(vc) {
-                return axios.get("http://localhost:8080/api/user")
+                return axios.get( baseURL + "/api/user")
                 .then(res => {
                     const userArray = [];
                     for (const key in res.data) {
@@ -118,7 +162,7 @@ const newStore = () => {
                 })
             },
             setPosts(vc){
-                return axios.get("http://localhost:8080/api/post")
+                return axios.get( baseURL + "/api/post")
                 .then(res => {
                     const postArray = [];
                     for (const key in res.data) {
@@ -129,7 +173,7 @@ const newStore = () => {
                 .catch(err => console.log(err))
             },
             setLike(vc) {
-                return axios.get("http://localhost:8080/api/like", {
+                return axios.get( baseURL + "/api/like", {
                     headers: { "Authorizations" : Cookie.get("token") }
                 })
                 .then(res => {
@@ -141,7 +185,7 @@ const newStore = () => {
                 })
             },
             setComment(vc) {
-                return axios.get("http://localhost:8080/api/comment", {
+                return axios.get( baseURL + "/api/comment", {
                     headers: { "Authorizations" : Cookie.get("token") }
                 })
                 .then(res => {
@@ -153,7 +197,7 @@ const newStore = () => {
                 })
             },
             setFollow(vc) {
-                return axios.get("http://localhost:8080/api/follow", {
+                return axios.get( baseURL + "/api/follow", {
                     headers: { "Authorizations" : Cookie.get("token") }
                 })
                 .then(res => {
@@ -164,8 +208,39 @@ const newStore = () => {
                     vc.commit("setFollow", followArray)
                 })
             },
+            setMessages(vc, params) {
+                console.log(params)
+                return axios.get( baseURL + "/api/message/" + params, {
+                    headers: { "Authorizations" : Cookie.get("token") }
+                })
+                .then(res => {
+                    const messageArray = [];
+                    for(const key in res.data) {
+                        messageArray.push({...res.data[key], id:key})
+                    }
+                    vc.commit("setMessages", messageArray)
+                    vc.dispatch("pollingMessages", [params, vc.state.loadMessages[vc.state.loadMessages.length - 1].ID])
+                })
+            },
+            pollingMessages(vc, params) {
+                console.log(params)
+                return axios.post( baseURL + "/api/message/polling/" + params[0], params[1], {
+                    headers: { "Authorizations" : Cookie.get("token") }
+                })
+                .then(res => {
+                        const messageArray = [];
+                        for(const key in res.data) {
+                            messageArray.push({...res.data[key], id:key})
+                        }
+                        vc.commit("pollingMessages", messageArray)
+                        vc.commit("setTalkUsers", params[0])
+                        setTimeout(() => {
+                            this.dispatch("pollingMessages", [params[0], vc.state.loadMessages[vc.state.loadMessages.length - 1].ID])
+                        }, 5000)
+                })
+            },
             addPost(vc, params) {
-                return axios.post("http://localhost:8080/api/post",params,
+                return axios.post( baseURL + "/api/post",params,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
                     headers: { "Authorizations" : Cookie.get("token") }
@@ -176,7 +251,7 @@ const newStore = () => {
                 .catch(err => console.log(err))
             },
             addComment(vc, params) {
-                return axios.post("http://localhost:8080/api/comment", params,
+                return axios.post( baseURL + "/api/comment", params,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
                     headers: { "Authorizations" : Cookie.get("token") }   
@@ -186,36 +261,47 @@ const newStore = () => {
                 })
                 .catch(err => console.log(err))
             },
+            addMessage(vc, params) {
+                return axios.post( baseURL + "/api/message", params,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                    headers: { "Authorizations" : Cookie.get("token") }  
+                })
+                .then(res => {
+                    vc.commit('addMessage', res.data)
+                })
+                .catch(err => console.log(err))
+            },
             updatePost(vc, params) {
-                return axios.post("http://localhost:8080/api/post/edit/" + params[0], params[1])
+                return axios.post( baseURL + "/api/post/edit/" + params[0], params[1])
                 .then(res => {
                     vc.commit('updatePost', res.data)
                 })
                 .catch(err => console.log(err))
             },
             updateComment(vc, params) {
-                return axios.post("http://localhost:8080/api/comment/edit/" + params[0], params[1])
+                return axios.post( baseURL + "/api/comment/edit/" + params[0], params[1])
                 .then(res => {
                     vc.commit('updateComment', res.data)
                 })
                 .catch(err => console.log(err))
             },
             deletePost(vc, postId) {
-                return axios.get("http://localhost:8080/api/post/edit/" + postId)
+                return axios.get( baseURL + "/api/post/edit/" + postId)
                 .then(res => {
                     vc.commit('deletePost', res.data)
                 })
                 .catch(err => console.log(err))
             },
             deleteComment(vc, commentID) {
-                return axios.get("http://localhost:8080/api/comment/edit/" + commentID)
+                return axios.get( baseURL + "/api/comment/edit/" + commentID)
                 .then(res => {
                     vc.commit('deleteComment', res.data)
                 })
                 .catch(err => console.log(err))
             },
             follow(vc, params) {
-                return axios.post("http://localhost:8080/api/follow", params,
+                return axios.post( baseURL + "/api/follow", params,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
                     headers: { "Authorizations" : Cookie.get("token") }
@@ -225,17 +311,25 @@ const newStore = () => {
                 })
             },
             like(vc, params) {
-                return axios.post("http://localhost:8080/api/like", params,
+                return axios.post( baseURL + "/api/like", params,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
-                    headers: { "Authorizations" : Cookie.get("token") }
+                    
                 })
                 .then(res => {
                     vc.commit("like", res.data)
                 })
             },
+            lock(vc, params) {
+                return axios.get( baseURL + "/api/lock/" + params, {
+                    headers: { "Authorizations" : Cookie.get("token") }
+                })
+                .then(res => {
+                    vc.commit("lock", res.data)
+                })
+            },
             login(vc, params) {
-                return axios.post("http://localhost:8080/auth",params,
+                return axios.post( baseURL + "/auth", params,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
                     headers: { "Authorizations" : `Bearer ${Cookie.get("jwt")}` }
@@ -246,13 +340,13 @@ const newStore = () => {
                 })
                 .catch(e => console.log(e));
             },
-
             logout(vc) {
-                Cookie.remove("token");
-                Cookie.remove("removeDate");
                 firebase.auth().signOut()
                 .then(() => {
-                    vc.commit("setLoginUser", null)
+                    vc.commit("clearVuexStore")
+                    Cookie.remove("token");
+                    Cookie.remove("removeDate");
+                    Cookie.remove("jwt");
                 }).catch((err) => {
                     alert(err)
                 })
@@ -260,7 +354,6 @@ const newStore = () => {
             initAuth(vc) {
                 const token = Cookie.get("token")
                 const removeDate = Cookie.get("removeDate")
-                console.log(token)
                 if(!token) {
                     console.log("トークンありません")
                     return
@@ -271,6 +364,7 @@ const newStore = () => {
                 }
                 if( Date.now() > removeDate) {
                     console.log("認証の時間切れ")
+                    alert("認証が切れました. 再ログインしてください.")
                     vc.dispatch("logout")
                 }
                 console.log("認証有効")
@@ -280,6 +374,9 @@ const newStore = () => {
         getters: {
             isAuthenticated: (state) => {
                 return !!state.loginUser
+            },
+            getLoginUser: (state) => {
+                return state.loginUser
             },
             getUserName: (state) => (user_id) => {
                 return state.loadUsers.find(user => user.ID == user_id).name
@@ -291,7 +388,21 @@ const newStore = () => {
                 return state.loadPosts.filter(post => post.user_id == id)
             },
             getComment: (state) => (postID) => {
-                return state.loadComment.filter(comment => comment.post_id == postID)
+                return state.loadComment.filter(comment => comment.post_id == postID && comment.is_deleted == false)
+            },
+            getMessagesArray: (state) => (talkUserID) => {
+                return state.loadMessages.filter(message => message.to_user_id == talkUserID || message.from_user_id == talkUserID)
+            },
+            getMessageUsersArray: (state) => {
+                return state.TalkUsers
+            },
+            loadAllPosts: (state, getters) => (userID) => {
+                var usersArray = state.loadUsers.filter(user => user.is_lock == false)
+                var posts = []
+                for(const user of usersArray){
+                    posts = posts.concat(getters.getPosts(user.ID))
+                }
+                return posts
             },
             loadFollowPosts: (state, getters) => (userID) => {
                 var followerArray = state.loadFollow.filter(follow => follow.from_user_id == userID && follow.is_follow == true)
@@ -315,6 +426,14 @@ const newStore = () => {
             isComment: (state) => (postID) => {
                 for(const comment of state.loadComment) {
                     if(comment.post_id == postID && comment.is_deleted == false) {
+                        return true
+                    }
+                }
+                return false
+            },
+            isLocked: (state) => (userID) => {
+                for(const user of state.loadUsers) {
+                    if(user.ID == userID && user.is_lock == true){
                         return true
                     }
                 }
@@ -347,10 +466,19 @@ const newStore = () => {
                 }
                 return num
             },
+            getCommentNumber: (state) => (postID) => {
+                var num = 0
+                for(const comment of state.loadComment) {
+                    if(comment.post_id == postID && comment.is_deleted == false) {
+                        num++
+                    }
+                }
+                return num
+            },
             followIDArray: (state) => (userID) => {
                 var userIDArray = [];
                 for(const follow of state.loadFollow) {
-                    if(follow.from_user_id == userID) {
+                    if(follow.from_user_id == userID && follow.is_follow == true) {
                         userIDArray.push(follow.to_user_id)
                     }
                 }
@@ -359,7 +487,7 @@ const newStore = () => {
             followerIDArray: (state) => (userID) => {
                 var userIDArray = [];
                 for(const follow of state.loadFollow) {
-                    if(follow.to_user_id == userID) {
+                    if(follow.to_user_id == userID  && follow.is_follow == true) {
                         userIDArray.push(follow.from_user_id)
                     }
                 }
@@ -381,6 +509,7 @@ const newStore = () => {
                         userIDArray.push(user.ID)
                     }
                 }
+                console.log(userIDArray)
                 return userIDArray
             },
             isFollow: (state) => (ToUserID, FromUserID) => {

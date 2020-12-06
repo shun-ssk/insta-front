@@ -1,8 +1,8 @@
 <template>
     <div class="search-content">
         <ul class="nav">
-            <li class="nav-item"><input placeholder="検索" :v-model="word"></li>
-            <li class="nav-item"><button class="button" @click="Search(word)">検索</button></li>
+            <li class="nav-item"><input placeholder="検索ワード(部分一致)" v-model="word"></li>
+            <li class="nav-item"><button class="button" @click="Search">検索</button></li>
         </ul>
         <section class="user-list">
         <UserList :usersID="users" />
@@ -12,6 +12,7 @@
 
 <script>
 import UserList from "../../components/User/UserList"
+import Cookie from 'js-cookie'
 
 export default {
     data() {
@@ -24,8 +25,9 @@ export default {
         UserList
     },
     methods: {
-        Search: function(word) {
-            this.users = this.$store.getters.searchUsers(word)
+        Search: function() {
+            console.log(this.word)
+            this.users = this.$store.getters.searchUsers(this.word)
         }
     }
 }
@@ -47,11 +49,12 @@ export default {
 
 .user-list {
     width: 100%;
-    margin-left: 13%;
 }
 
 .search-content {
   justify-content: center;
+  margin-top: 30px;
+  
 }
 
 </style>

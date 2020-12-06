@@ -18,7 +18,8 @@ export default {
     },
     props: {
         usersID: {
-            type: Array
+            type: Array,
+            required: true
         }
     }
 }
@@ -27,7 +28,6 @@ export default {
 <style scoped>
 .user-list {
   display: flex;
-  padding: 20px;
   box-sizing: border-box;
   flex-wrap: wrap;
   align-items: center;
